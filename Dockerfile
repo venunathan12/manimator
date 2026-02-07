@@ -14,16 +14,16 @@ RUN pip install manim --break-system-packages
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install ffmpeg texlive
 
 RUN mkdir /manimator
-COPY docker /manimator
-COPY src /manimator
-COPY static /manimator
 COPY .npmrc /manimator
 COPY eslint.config.js /manimator
-COPY package-lock.json /manimator
-COPY package.json /manimator
 COPY svelte.config.js /manimator
 COPY tsconfig.json /manimator
 COPY vite.config.ts /manimator
+COPY docker /manimator/docker
+COPY package.json /manimator
+COPY package-lock.json /manimator
+COPY static /manimator/static
+COPY src /manimator/src
 RUN bash /manimator/docker/build.sh
 
 VOLUME [ "/data" ]
