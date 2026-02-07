@@ -164,3 +164,6 @@ vite.config.ts.timestamp-*
 
 # Protyping Directory
 prototype/
+
+# User Data Directory
+data/

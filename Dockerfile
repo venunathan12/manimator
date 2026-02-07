@@ -16,5 +16,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install ffmpeg texlive
 COPY . /manimator
 RUN bash /manimator/docker/build.sh
 
+VOLUME [ "/data" ]
+
 EXPOSE 42042
 CMD [ "bash", "/manimator/docker/serve.sh" ]
