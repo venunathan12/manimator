@@ -1,9 +1,14 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     
     let newProjName: String = $state('');
+    let existingProjs: String[] | null = $state(null);
 
     function validateProjectName(projName: String)
     {
+        // Project creation can only be done after existing projects are loaded
+        if (existingProjs == null) return { valid: false, message: 'Please wait while we scan your existing projects.' };
+
         // Project Name cannot be empty
         if (projName.length == 0) return { valid: false, message: '' };
 
@@ -19,12 +24,24 @@
 
         // Leading or trailing spaces are not allowed
         if (projName != projName.trim()) return { valid: false, message: 'No leading or trailing spaces, please.' };
+
+        // You cannot create two projects with the same name
+        if (existingProjs.includes(projName)) return { valid: false, message: 'A project with this name already exists. You may open it from the section below.' };
         
         return { valid: true, message: '' };
     }
 
     let newProjValidity = $derived(validateProjectName(newProjName));
     let newProjAllowed = $derived(newProjValidity.valid);
+
+    onMount(
+        async function ()
+        {
+            let resphead = await fetch('/api/projects');
+            if (resphead.status == 200)
+                existingProjs = await resphead.json();
+        }
+    );
 
 </script>
 
