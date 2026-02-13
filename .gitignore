@@ -162,6 +162,9 @@ vite.config.ts.timestamp-*
 # VS Code
 .vscode
 
+# Notes
+NOTES.md
+
 # Protyping Directory
 prototype/
 
