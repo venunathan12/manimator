@@ -1,7 +1,6 @@
 <script lang="ts">
 
-    import openimg from '$lib/assets/buttons/home-open-project.svg';
-    import delimg from '$lib/assets/buttons/home-delete-project.svg';
+    import ModalDialog from "$lib/components/ModalDialog.svelte";    
 
     let { projectName } = $props();
 
@@ -16,14 +15,41 @@
         isHighlighted = false;
     }
 
+    let isPendingDeleteDialog: boolean = $state(false);
+    let modalDialogBox: any = $state(null);
+
     async function OpenProject()
     {
-        // TODO
+        location.href = `/projects/${ encodeURI(projectName) }`;
     }
 
     async function DeleteProject()
     {
-        // TODO
+        let deleteProjDialogPromise = Promise.withResolvers();
+        modalDialogBox = {
+            icon: 'common-dialog-warning',
+            subject: 'Delete Project',
+            actions: [
+                { text: 'Yes', color: 'red' },
+                { text: 'No', color: 'red' }
+            ],
+            onaction: deleteProjDialogPromise.resolve
+        };
+        isPendingDeleteDialog = true;
+        let createProjDialogResult = await deleteProjDialogPromise.promise;
+        isPendingDeleteDialog = false;
+
+        if (createProjDialogResult === 'No')
+            return;
+
+        let resphead = await fetch(
+            '/api/projects',
+            {
+                method: 'DELETE',
+                body: JSON.stringify({ projectName: projectName })
+            }
+        );
+        location.reload();
     }
 
 </script>
@@ -33,9 +59,16 @@
     <div class="flex justify-start">
         <div class="grid grid-cols-2 gap-x-3">
             {#if isHighlighted }
-                <button onclick={ OpenProject } class="py-1 px-1 rounded-full hover:bg-green-100"><img src={ openimg } alt="Open Project" title="Open Project" class="h-4"></button>
-                <button onclick={ DeleteProject } class="py-1 px-1 rounded-full hover:bg-red-300"><img src={ delimg } alt="Delete Project" title="Delete Project" class="h-4"></button>
+                <button onclick={ OpenProject } class="py-1 px-1 rounded-full hover:bg-green-100"><img src="/assets/icons/home-open-project.svg" alt="Open Project" title="Open Project" class="h-4"></button>
+                <button onclick={ DeleteProject } class="py-1 px-1 rounded-full hover:bg-red-300"><img src="/assets/icons/home-delete-project.svg" alt="Delete Project" title="Delete Project" class="h-4"></button>
             {/if}
         </div>
     </div>
 </div>
+{#if isPendingDeleteDialog }
+    <ModalDialog icon={ modalDialogBox.icon } subject={ modalDialogBox.subject } actions={ modalDialogBox.actions } onaction={ modalDialogBox.onaction }>
+        <div>You have chosen to delete the following project:</div>
+        <pre>{ projectName }</pre><br>
+        <div>Are you sure you wish to continue?</div>
+    </ModalDialog>
+{/if}

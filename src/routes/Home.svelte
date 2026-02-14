@@ -3,20 +3,18 @@
     import { onMount } from "svelte";
 
     import ProjectItem from "./ProjectItem.svelte";
+    import ModalDialog from "$lib/components/ModalDialog.svelte";
     
-    let newProjName: String = $state('');
-    let existingProjs: String[] | null = $state(null);
+    let newProjName: string = $state('');
+    let existingProjs: string[] | null = $state(null);
     let isWaitingForProjectCreation: boolean = $state(false);
 
     function validateNewProjectName()
     {
-        // Project creation can only be done after existing projects are loaded
         if (existingProjs == null) return { valid: false, message: 'Please wait while we scan your existing projects.' };
 
-        // Project Name cannot be empty
         if (newProjName.length == 0) return { valid: false, message: '' };
 
-        // Only ASCII alphabets, number and spaces are allowed
         let chars = Array.from(newProjName).map(x => x.charCodeAt(0));
         let charValidity = chars.map(x =>
             (x >= 'A'.charCodeAt(0) && x <= 'Z'.charCodeAt(0)) ||
@@ -26,10 +24,8 @@
         );
         if (charValidity.includes(false)) return { valid: false, message: 'Only ASCII alphabets, number and spaces, please.' };
 
-        // Leading or trailing spaces are not allowed
         if (newProjName != newProjName.trim()) return { valid: false, message: 'No leading or trailing spaces, please.' };
 
-        // You cannot create two projects with the same name
         if (existingProjs.includes(newProjName)) return { valid: false, message: 'A project with this name already exists. You may open it from the section below.' };
         
         return { valid: true, message: '' };
@@ -47,11 +43,46 @@
         }
     );
 
+    let isPendingCreateDialog: boolean = $state(false);
+    let isProjectCreationFailed: boolean = $state(false);
+    let modalDialogBox: any = $state(null);
+
     async function CreateProject()
     {
         isWaitingForProjectCreation = true;
 
-        // TODO
+        let createProjDialogPromise = Promise.withResolvers();
+        modalDialogBox = {
+            icon: 'common-dialog-create-project',
+            subject: 'Create Project',
+            actions: [
+                { text: 'Create', color: 'green' },
+                { text: 'Cancel', color: 'red' }
+            ],
+            onaction: createProjDialogPromise.resolve
+        };
+        isPendingCreateDialog = true;
+        let createProjDialogResult = await createProjDialogPromise.promise;
+        isPendingCreateDialog = false;
+
+        if (createProjDialogResult === 'Cancel')
+        {
+            newProjName = '';
+            isWaitingForProjectCreation = false;
+            return;
+        }
+
+        let resphead = await fetch(
+            '/api/projects',
+            {
+                method: 'POST',
+                body: JSON.stringify({ projectName: newProjName })
+            }
+        );
+        if (resphead.status == 201)
+            location.href = `/projects/${ encodeURI(newProjName) }`;
+        else
+            isProjectCreationFailed = true;
     }
 
 </script>
@@ -63,12 +94,14 @@
     <div class="h-3/10 grid grid-cols-1 content-center place-items-center">
         <div class="grid grid-cols-2 gap-x-20 gap-y-5 content-center place-items-center">
             <input type="text" bind:value={ newProjName } class="shadow rounded-full w-full py-2 px-4 text-black leading-tight focus:outline-none focus:shadow-outline"/>
-            {#if isWaitingForProjectCreation }
-                <span class="text-green-700 row-span-2 max-w-50">Please wait. Your new project is being created.</span>
+            {#if isProjectCreationFailed }
+                <span class="text-red-600 row-span-2 max-w-50">{ 'Unable to create your project. Please refresh the page and try again.' }</span>
+            {:else if isWaitingForProjectCreation }
+                <span class="text-green-700 row-span-2 max-w-50">{ isPendingCreateDialog ? '' : 'Please wait. Your new project is being created.' }</span>
             {:else}
                 <span class="text-red-600 row-span-2 max-w-50">{ newProjValidity.message }</span>
             {/if}
-            <button onclick={ CreateProject } disabled={ isWaitingForProjectCreation || !newProjAllowed } class="bg-green-50 hover:bg-green-300 { isWaitingForProjectCreation ? 'disabled:bg-green-300 disabled:text-green-100' : 'disabled:bg-red-300 disabled:text-red-100' } text-black font-bold py-2 px-4 rounded-full">Create New Project</button>
+            <button onclick={ CreateProject } disabled={ isWaitingForProjectCreation || !newProjAllowed } class="bg-green-100 hover:bg-green-300 { isWaitingForProjectCreation ? 'disabled:bg-green-300 disabled:text-green-100' : 'disabled:bg-red-300 disabled:text-red-100' } text-black font-bold py-2 px-4 rounded-full">Create New Project</button>
         </div>
     </div>
     <div class="bg-red-50 h-6/10 flex items-center">
@@ -94,3 +127,8 @@
         </div>
     </div>
 </div>
+{#if isPendingCreateDialog }
+    <ModalDialog icon={ modalDialogBox.icon } subject={ modalDialogBox.subject } actions={ modalDialogBox.actions } onaction={ modalDialogBox.onaction }>
+        <div>TODO</div>
+    </ModalDialog>
+{/if}
