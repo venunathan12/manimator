@@ -10,7 +10,7 @@ async function listProjects()
     return existingProjs;
 }
 
-async function createProject(projectName: string): Promise<boolean>
+async function createProject(projectName: string, starterPack: string): Promise<boolean>
 {
     if (projectName.length == 0) return false;
     if (projectName !== projectName.trim()) return false;
@@ -24,14 +24,42 @@ async function createProject(projectName: string): Promise<boolean>
     if (charValidity.includes(false)) return false;
     if ((await listProjects()).includes(projectName)) return false;
 
-    // TODO
+    try
+    {
+        await fs.mkdir(`${ Config.PROJECTS_DIR }/${ projectName }`);
+
+        let now = Date.now();
+        let metadata = {
+            name: projectName,
+            version: 1,
+            createdOn: now,
+            updatedOn: now
+        };
+
+        await fs.writeFile(`${ Config.PROJECTS_DIR }/${ projectName }/mproject.json`, JSON.stringify(metadata, null, 4));
+    }
+    catch (e: any)
+    {
+        console.error(e);
+        return false;
+    }
 
     return true;
 }
 
 async function deleteProject(projectName: string): Promise<boolean>
 {
-    // TODO
+    if (!(await listProjects()).includes(projectName)) return false;
+
+    try
+    {
+        fs.rm(`${ Config.PROJECTS_DIR }/${ projectName }`, { recursive: true });
+    }
+    catch (e: any)
+    {
+        console.error(e);
+        return false;
+    }
     
     return true;
 }

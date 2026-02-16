@@ -43,6 +43,24 @@
         }
     );
 
+    let starterPack: string = $state('NULL');
+    let starterPackLock: boolean = $state(false);
+    let starterPackShowLock: boolean = $state(false);
+    
+    function resetStarterPackLock()
+    {
+        if (starterPack === 'NULL')
+        {
+            starterPackShowLock = true;
+        }
+        else
+        {
+            starterPackShowLock = false;
+            starterPackLock = false;
+        }
+    }
+    $effect(resetStarterPackLock);
+
     let isPendingCreateDialog: boolean = $state(false);
     let isProjectCreationFailed: boolean = $state(false);
     let modalDialogBox: any = $state(null);
@@ -76,7 +94,7 @@
             '/api/projects',
             {
                 method: 'POST',
-                body: JSON.stringify({ projectName: newProjName })
+                body: JSON.stringify({ projectName: newProjName, starterPack })
             }
         );
         if (resphead.status == 201)
@@ -129,6 +147,14 @@
 </div>
 {#if isPendingCreateDialog }
     <ModalDialog icon={ modalDialogBox.icon } subject={ modalDialogBox.subject } actions={ modalDialogBox.actions } onaction={ modalDialogBox.onaction }>
-        <div>TODO</div>
+        <div>Would you like to see a few examlpe animations in your new project?</div><br>
+        <div class="flex items-center justify-center">
+            <div class="grid grid-cols-2 gap-x-10 gap-y-1">
+                <div class="flex items-center"><input type="radio" bind:group={ starterPack } value="NULL"><span class="ml-3">No, create an empty project.</span></div><div class="flex items-center">{#if starterPackShowLock }<input type="checkbox" bind:checked={ starterPackLock }><span class="ml-3">Always select this choice.</span>{/if}</div>
+                <div class="flex items-center"><input type="radio" bind:group={ starterPack } value="EXAMPLE_1"><span class="ml-3">Yes, basic examlpes. ()</span></div><div></div>
+                <div class="flex items-center"><input type="radio" bind:group={ starterPack } value="EXAMPLE_2"><span class="ml-3">Yes, intermediate examlpes. ()</span></div><div></div>
+                <div class="flex items-center"><input type="radio" bind:group={ starterPack } value="EXAMPLE_3"><span class="ml-3">Yes, advanced examlpes. ()</span></div><div></div>
+            </div>
+        </div>
     </ModalDialog>
 {/if}

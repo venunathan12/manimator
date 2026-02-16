@@ -25,7 +25,13 @@
         </div>
         <div class="bg-amber-100 my-1 mx-1 px-2 py-2 rounded-full flex items-center justify-end">
             {#each actions as action }
-                <button onclick={ onAction } disabled={ action.disabled === true } class="bg-{ action.color }-100 hover:bg-{ action.color }-300 disabled:bg-{ action.color }-300 disabled:text-{ action.color }-100 text-black font-bold py-2 px-4 rounded-full ml-4">{ action.text }</button>
+                <button
+                    onclick={ onAction }
+                    disabled={ typeof action.disabled === 'function' ? action.disabled() : action.disabled === true }
+                    class="bg-{ action.color }-100 hover:bg-{ action.color }-300 disabled:bg-{ action.color }-300 disabled:text-{ action.color }-100 text-black font-bold py-2 px-4 rounded-full ml-4"
+                >
+                    { action.text }
+                </button>
             {/each}
         </div>
     </div>
