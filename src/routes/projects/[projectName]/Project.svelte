@@ -1,10 +1,19 @@
 <script lang="ts">
 
-    import { onMount } from "svelte";
     import { page } from "$app/state";
 
     import VPanelSelector from "$lib/components/VPanelSelector.svelte";
     import { PanelSelectionState } from "$lib/components/PanelSelectionState.svelte";    
+    import LeftPanelProjectHome from "./LeftPanelProjectHome.svelte";
+    import { LeftPanelProjectHomeState } from "./LeftPanelProjectHomeState.svelte";
+    import LeftPanelProjectScenes from "./LeftPanelProjectScenes.svelte";
+    import { LeftPanelProjectScenesState } from "./LeftPanelProjectScenesState.svelte";
+    import LeftPanelProjectBlueprints from "./LeftPanelProjectBlueprints.svelte";
+    import { LeftPanelProjectBlueprintsState } from "./LeftPanelProjectBlueprintsState.svelte";
+    import LeftPanelProjectObjects from "./LeftPanelProjectObjects.svelte";
+    import { LeftPanelProjectObjectsState } from "./LeftPanelProjectObjectsState.svelte";
+    import LeftPanelProjectHelp from "./LeftPanelProjectHelp.svelte";
+    import { LeftPanelProjectHelpState } from "./LeftPanelProjectHelpState.svelte";
 
     let { projectName } = page.data;
 
@@ -38,29 +47,26 @@
         ]
     );
 
-    let rightPanelStates: any = {
-        PROJECT_HOME: new PanelSelectionState(
-            []
-        ),
-        SCENES: new PanelSelectionState(
-            []
-        ),
-        OBJECTS: new PanelSelectionState(
-            []
-        ),
-        BLUEPRINTS: new PanelSelectionState(
-            []
-        ),
-        HELP: new PanelSelectionState(
-            []
-        )
-    };
+    let globalState: any = $state({ projectName });
+    let leftPanelProjectHomeState = $state(new LeftPanelProjectHomeState());
+    let leftPanelProjectScenesState = $state(new LeftPanelProjectScenesState());
+    let leftPanelProjectBlueprintsState = $state(new LeftPanelProjectBlueprintsState());
+    let leftPanelProjectObjectsState = $state(new LeftPanelProjectObjectsState());
+    let leftPanelProjectHelpState = $state(new LeftPanelProjectHelpState());
+
+    let leftTabManagers: {[key: string]: LeftPanelProjectHomeState} = $derived({
+        PROJECT_HOME: leftPanelProjectHomeState,
+        SCENES: leftPanelProjectScenesState,
+        BLUEPRINTS: leftPanelProjectBlueprintsState,
+        OBJECTS: leftPanelProjectObjectsState,
+        HELP: leftPanelProjectHelpState
+    });
 
 </script>
 
 <div
     style:--left-panel-width={ leftPanelState.selection != 'NULL' ? '250px' : '0px' }
-    style:--right-panel-width={ leftPanelState.selection != 'NULL' && rightPanelStates[leftPanelState.selection].selection != 'NULL' ? '200px' : '0px' }
+    style:--right-panel-width={ leftPanelState.selection != 'NULL' && leftTabManagers[leftPanelState.selection].childPanelState.selection != 'NULL' ? '250px' : '0px' }
     style:--bottom-panel-height={ '200px' }
 >
     <div class="flex h-screen w-screen">
@@ -69,7 +75,19 @@
                 <VPanelSelector bind:selection={ leftPanelState.selection } options={ leftPanelState.options } />
             </div>
             <div class="x-left-panel h-full">
-
+                <div class="h-full ml-10">
+                    {#if leftPanelState.selection == 'PROJECT_HOME' }
+                        <LeftPanelProjectHome bind:globalState bind:localState={ leftPanelProjectHomeState } />
+                    {:else if leftPanelState.selection == 'SCENES' }
+                        <LeftPanelProjectScenes bind:globalState bind:localState={ leftPanelProjectScenesState } />
+                    {:else if leftPanelState.selection == 'BLUEPRINTS' }
+                        <LeftPanelProjectBlueprints bind:globalState bind:localState={ leftPanelProjectBlueprintsState } />
+                    {:else if leftPanelState.selection == 'OBJECTS' }
+                        <LeftPanelProjectObjects bind:globalState bind:localState={ leftPanelProjectObjectsState } />
+                    {:else if leftPanelState.selection == 'HELP' }
+                        <LeftPanelProjectHelp bind:globalState bind:localState={ leftPanelProjectHelpState } />
+                    {/if}
+                </div>
             </div>
         </div>
         <div class="x-middle-panel bg-red-50 h-full flex flex-col">
@@ -87,15 +105,15 @@
         </div>
         <div class="bg-blue-100 h-full flex">
             <div class="x-right-panel h-full">
-                {#if leftPanelState.selection !== 'NULL' }
-                    {#if rightPanelStates[leftPanelState.selection].selection != 'NULL' }
-                        <div>{ rightPanelStates[leftPanelState.selection].selection }</div>
+                <div class="h-full mr-10">
+                    {#if leftPanelState.selection !== 'NULL' }
+
                     {/if}
-                {/if}
+                </div>
             </div>
             {#if leftPanelState.selection != 'NULL' }
                 <div class="h-full invisible absolute right-0 flex items-center">
-                    <VPanelSelector bind:selection={ rightPanelStates[leftPanelState.selection].selection } options={ rightPanelStates[leftPanelState.selection].options } dock='right' />
+                    <VPanelSelector bind:selection={ leftTabManagers[leftPanelState.selection].childPanelState.selection } options={ leftTabManagers[leftPanelState.selection].childPanelState.options } dock='right' />
                 </div>
             {/if}
         </div>
